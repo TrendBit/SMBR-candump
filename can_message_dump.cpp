@@ -1,34 +1,4 @@
-#include <iostream>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <csignal>
-#include <unordered_map>
-
-#include <linux/can.h>
-#include <linux/can/raw.h>
-#include <sys/socket.h>
-
-#include "codes/codes.hpp"
-
-#define MAGIC_ENUM_RANGE_MIN 0
-#define MAGIC_ENUM_RANGE_MAX 4096
-#include "magic_enum.hpp"
-#include "emio.hpp"
-#include "color.hpp"
-
-struct __attribute__((packed)) __attribute__((__may_alias__)) Header {
-    Codes::Instance     Instance_enumeration : 4 = Codes::Instance::Undefined;
-    Codes::Module       Module_type : 8    = Codes::Module::Undefined;
-    uint8_t             Reserved : 4       = 0x0;
-    Codes::Message_type Message_type : 12  = Codes::Message_type::Undefined;
-    bool                Emergency_flag : 1 = false;
-};
-
-const std::string line_format = "{:^10} {:^8} {:^16} {:^12} {:^12} {:^6} {:^12}";
+#include "can_message_dump.hpp"
 
 std::unordered_map<uint8_t, std::string> message_colorization {
     {0x0, "red"},
@@ -97,7 +67,7 @@ int Read_frame(int socket, struct can_frame *frame){
         return 1;
     }
 
-    if (nbytes < sizeof(struct can_frame)) {
+    if (nbytes < static_cast<int>(sizeof(struct can_frame))) {
         std::cerr << "Read: incomplete CAN frame" << std::endl;
         return 1;
     }
@@ -147,34 +117,68 @@ void Print_admin_frame(int time_ms, struct can_frame *frame){
     std::cout << frame_line << std::endl;
 }
 
-int main(int argc, char **argv){
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <can_interface>" << std::endl;
-        return 1;
+bool Check_interface_exists(const char* interface_name) {
+    struct ifreq ifr;
+    int sock = socket(AF_CAN, SOCK_RAW, CAN_RAW);
+
+    if (sock < 0) {
+        return false;
     }
 
-    auto start_time = std::chrono::steady_clock::now();
-    int socket = Open_socket(argv[1]);
-    Prepare_terminal();
-    Print_header();
+    std::strncpy(ifr.ifr_name, interface_name, IFNAMSIZ);
+    if (ioctl(sock, SIOCGIFINDEX, &ifr) < 0) {
+        close(sock);
+        return false;
+    }
 
-    struct can_frame frame;
+    close(sock);
+    return true;
+}
 
-    // loop to read and print CAN frames
-    while (true) {
-        Read_frame(socket, &frame);
+int main(int argc, char **argv) {
+    try {
+        const char* interface = argc > 1 ? argv[1] : DEFAULT_CAN_INTERFACE;
 
-        auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time).count();
-
-        if (frame.can_id & CAN_EFF_FLAG) {
-            Print_app_frame(elapsed_ms, &frame);
-        } else {
-            Print_admin_frame(elapsed_ms, &frame);
+        if (!Check_interface_exists(interface)) {
+            std::cerr << "Usage: " << argv[0] << " <can_interface>" << std::endl;
+            return 1;
         }
 
-        Print_header();
-    }
+        auto start_time = std::chrono::steady_clock::now();
+        int socket = Open_socket(interface);
 
-    close(socket);
-    return 0;
-} // main
+        if (socket < 0) {
+            return 1;
+        }
+
+        Prepare_terminal();
+        Print_header();
+
+        struct can_frame frame;
+
+        while (true) {
+            Read_frame(socket, &frame);
+            auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>
+                (std::chrono::steady_clock::now() - start_time).count();
+
+            if (frame.can_id & CAN_EFF_FLAG) {
+                Print_app_frame(elapsed_ms, &frame);
+            } else {
+                Print_admin_frame(elapsed_ms, &frame);
+            }
+
+            Print_header();
+        }
+
+        close(socket);
+        return 0;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+    catch (...) {
+        std::cerr << "Unknown error occurred" << std::endl;
+        return 1;
+    }
+}
