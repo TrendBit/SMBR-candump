@@ -1,5 +1,5 @@
 
-TARGET = candump
+TARGET = can-watch
 IMAGE_NAME := rpi-cross-compile
 
 PWD = $(shell pwd)
@@ -11,11 +11,11 @@ CONTAINER_RUN := docker run --rm --privileged -t -v $(PWD):/project --user "$(US
 
 all: $(TARGET)
 
-candump: docker-build
+can-watch: docker-build
 	$(CONTAINER_RUN) "aarch64-linux-gnu-g++ -Wno-packed-bitfield-compat can_message_dump.cpp -I magic_enum -I emio -o $(TARGET) -std=c++20"
 
 transfer: $(TARGET)
-	scp $(TARGET) phenobottle:~
+	scp $(TARGET) smbr:~
 
 docker-build: docker-clean
 	docker build . --tag $(IMAGE_NAME) --build-arg USER_ID=$(USER_ID) --build-arg GROUP_ID=$(GROUP_ID)

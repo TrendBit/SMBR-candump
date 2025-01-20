@@ -16,14 +16,14 @@ Cross-compilation on host machine:
 git clone git@github.com:TrendBit/SMBR-candump.git  
 cd SMBR-candump  
 make  
-scp candump pi@192.168.x.x:~  
+scp can-watch pi@192.168.x.x:~  
 ```  
 
 Run: `can-watch <can_interface>`
 
 Execution and example with `cansend can0 0b000051#04`:
 ```zsh  
-./candump can0
+./can-watch can0
     Time        ID        Message           Module          Instance     Length    Data
 [00001.342]  0b000051   Ping_request    Control_board      Exclusive        1      0x04 
 [00001.695]  0b010051  Ping_response    Control_board      Exclusive        1      0x04
