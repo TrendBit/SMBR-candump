@@ -77,7 +77,7 @@ int Open_socket(const char *if_name){
 void Print_header(){
     std::cout << "\033[s";       // save cursor position
     std::cout << "\033[H\033[K"; // move to top left
-    std::string header_line = emio::format("{:^12} {:^8} {:^20} {:^16} {:^16} {:^7}   {:}", "Time", "ID", "Message", "Module", "Instance", "Length", "Data");
+    std::string header_line = emio::format("{:^12} {:^8} {:^32} {:^20} {:^20} {:^7}   {:}", "Time", "ID", "Message", "Module", "Instance", "Length", "Data");
     std::cout << header_line;
     std::cout << "\033[u";       // restore cursor position
     std::cout << std::flush;
@@ -125,7 +125,7 @@ void Print_app_frame(int time_ms, struct can_frame *frame){
     }
 
     // Align count with escape sequences for colors (9 characters for each colorized word)
-    std::string frame_line = emio::format("{:^12} {:>8} {:^29} {:^16} {:^16} {:^7}   {:}", time, id, message_colored, module, instance ,length , data);
+    std::string frame_line = emio::format("{:^12} {:^8} {:<40} {:^20} {:^20} {:^7}   {:}", time, id, message_colored, module, instance ,length , data);
 
     std::cout << frame_line << std::endl;
 }
