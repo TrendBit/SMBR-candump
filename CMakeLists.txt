@@ -20,6 +20,15 @@ file(GLOB_RECURSE HEADERS
 # Create executable
 add_executable(${PROJECT_NAME} can_message_dump.cpp)
 
+target_link_libraries(${PROJECT_NAME} 
+  SMBR.Can.Codes
+)
+
+add_dependencies(${PROJECT_NAME} 
+  SMBR.Can.Codes
+)
+
+
 # Set include directories
 target_include_directories(${PROJECT_NAME}
     PRIVATE
@@ -37,13 +46,7 @@ set_target_properties(${PROJECT_NAME}
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-# Installation
-include(GNUInstallDirs)
 
-install(TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-install(FILES ${HEADERS}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} 
+  RUNTIME DESTINATION ${SMBR_INSTALL_HOME}
 )
