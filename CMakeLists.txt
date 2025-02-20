@@ -40,13 +40,6 @@ target_include_directories(${PROJECT_NAME}
 # Disable note about change of packed bit-field behavior in GCC
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-packed-bitfield-compat)
 
-# Set output directories
-set_target_properties(${PROJECT_NAME}
-    PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
-
-
 install(TARGETS ${PROJECT_NAME} 
-  RUNTIME DESTINATION ${SMBR_INSTALL_HOME}
+  RUNTIME DESTINATION ${SMBR_INSTALL_BIN}
 )
