@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(can-watch
+project(reactor-can-watch
         VERSION 1.0
         LANGUAGES CXX)
 
